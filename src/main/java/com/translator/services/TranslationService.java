@@ -46,4 +46,5 @@ public class TranslationService {
         return translatedText;
 
     }
+
 }
