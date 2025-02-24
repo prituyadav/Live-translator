@@ -1,0 +1,12 @@
+runtime: java17  # Use java11 if needed
+instance_class: F1  # Free-tier instance
+
+entrypoint: java -jar build/libs/live-translator-0.0.1-SNAPSHOT.jar
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 2
+
+env_variables:
+  PORT: "8080"

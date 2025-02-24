@@ -44,7 +44,7 @@ dependencies {
 	implementation 'com.google.cloud:google-cloud-texttospeech:2.10.0'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-	implementation 'com.google.cloud:google-cloud-speech:2.6.0'
+	implementation 'com.google.cloud:google-cloud-speech:4.10.0'
 	implementation 'com.google.api:api-common:2.10.0'
 }
 

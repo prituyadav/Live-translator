@@ -7,15 +7,15 @@ import com.translator.services.TextToSpeechService;
 import com.translator.services.TranslationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -38,20 +38,20 @@ public class TranslationController {
     }
 
     @PostMapping("/translate/text")
-    public ResponseEntity<String> translateAndStoreAudio(@RequestBody TranslationRequest request) {
+    public ResponseEntity<Map<String, String>> translateAndStoreAudio(@RequestBody TranslationRequest request) {
         try {
-            String translated = translationService.translateAndStoreAudio(request);
-            return ResponseEntity.ok("Translated Text: " + translated);
+            Map<String, String> translated = translationService.translateAndStoreAudio(request);
+            return ResponseEntity.ok(translated);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+            Map<String, String> errorResponse = Map.of("error", e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
 
     @GetMapping("/audios/recent")
     public List<String> getAllRecentUploadedFiles(
-            @RequestParam String bucketName,
             @RequestParam(defaultValue = "10") int maxFiles) {
-        return storageService.getAllRecentUploadedFiles(bucketName, maxFiles);
+        return storageService.getAllRecentUploadedFiles(maxFiles);
     }
 
     @PostMapping("/texttospeech")
@@ -59,30 +59,29 @@ public class TranslationController {
         try {
             String audioFilePath =
                     textToSpeechService.convertTextToSpeech(request.getText(), request.getLanguageCode());
-            return ResponseEntity.ok("Audio file created: " + audioFilePath);
+            return ResponseEntity.ok(audioFilePath);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
     }
 
-    @GetMapping("/download/{fileName}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String fileName) {
-        try {
-            Path filePath = Paths.get(fileName).toAbsolutePath();
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                        .body(resource);
-            } else {
-                return ResponseEntity.status(404).body(null);
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
+    @PostMapping("/audios/enable/access")
+    public String getAllRecentUploadedFiles() {
+        storageService.enableUniformBucketLevelAccess();
+        return "successfully enabled";
     }
 
 
+    @PostMapping("/transcribe")
+    public ResponseEntity<Map<String, String>> uploadAndTranscribe(@RequestParam("file") MultipartFile file) {
+        try {
+            Map<String, String> result = translationService.uploadAndTranscribe(file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
+
+
